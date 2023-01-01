@@ -1,0 +1,65 @@
+import scala.collection._
+
+object Solution {
+    def wallsAndGates(rooms: Array[Array[Int]]): Unit = {
+        new WallsAndGates().populateDistanceFromGate(rooms)
+    }
+}
+
+object WallsAndGates {
+    private case class Coordinates(row: Int, col: Int)
+    private val EmptyRoom = 2147483647
+}
+
+class WallsAndGates() {
+    import WallsAndGates._
+    // find gates and store them in a queue O(m x n)
+    // BFS starting from the gates O(m x n)
+    // if room is not a wall & not out of bound, add to queue & visited map
+    // at each iteration update room value with its distance from nearest gate
+
+    private val gates: mutable.Queue[Coordinates] = mutable.Queue()
+    private val visited: mutable.HashMap[Coordinates, Int] = mutable.HashMap()
+
+    def populateDistanceFromGate(rooms: Array[Array[Int]]): Unit = {
+        val gates = findGates(rooms)
+        var distance: Int = 0
+        while(!gates.isEmpty) {
+            val currentRoom = gates.dequeue
+            addNeighborsToQueue(currentRoom, rooms, visited(currentRoom) + 1)
+            rooms(currentRoom.row)(currentRoom.col) = visited(currentRoom)
+        }
+    }
+
+    private def findGates(rooms:Array[Array[Int]]): mutable.Queue[Coordinates] = {
+        rooms.zipWithIndex.map { case(row: Array[Int], rowIdx) => {
+            row.zipWithIndex.map { case(col: Int, colIdx) =>
+                if(rooms(rowIdx)(colIdx) == 0) {
+                  gates.enqueue(Coordinates(rowIdx, colIdx))
+                  visited(Coordinates(rowIdx, colIdx)) = 0
+                }
+                }
+            }
+        }
+        gates
+    }
+
+    private def addNeighborsToQueue(room: Coordinates, rooms: Array[Array[Int]], distance: Int): Unit = {
+        addNeighborIfValid(Coordinates(room.row + 1, room.col), rooms, distance)
+        addNeighborIfValid(Coordinates(room.row - 1, room.col), rooms, distance)
+        addNeighborIfValid(Coordinates(room.row, room.col + 1), rooms, distance)
+        addNeighborIfValid(Coordinates(room.row, room.col - 1), rooms, distance)
+    }
+
+    private def addNeighborIfValid(room: Coordinates, rooms: Array[Array[Int]], distance: Int): Unit = {
+        if(coordinatesWithinConstraints(room, rooms.size, rooms(0).size) && !visited.contains(room) && isRoomEmpty(room, rooms)) {
+            gates.enqueue(room)
+            visited(room) = distance
+        }
+    }
+
+    private def isRoomEmpty(room: Coordinates, rooms: Array[Array[Int]]): Boolean = rooms(room.row)(room.col).==(EmptyRoom)
+
+    private def coordinatesWithinConstraints(coord: Coordinates, rSize: Int, cSize: Int): Boolean =
+        0 <= coord.row && coord.row < rSize && 0 <= coord.col && coord.col < cSize
+}
