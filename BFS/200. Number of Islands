@@ -1,0 +1,103 @@
+import scala.collection._
+
+object Solution {
+    def numIslands(grid: Array[Array[Char]]): Int = {
+        new NumberOfIslandsSolver(grid).solve()
+    }
+}
+
+object NumberOfIslandsSolver {
+    case class Coordinates(row: Int, col: Int)
+    private val Land: Char = '1'
+    private val Water: Char = '0'
+    type Visited = Boolean
+}
+
+class NumberOfIslandsSolver(grid: Array[Array[Char]]) {
+    import NumberOfIslandsSolver._
+
+    private val rows = grid.size
+    private val cols = grid(0).size
+    private val unvisitedLands = mutable.HashSet[Coordinates]()
+    private val visited = mutable.HashSet[Coordinates]()
+
+    // iterate over each cell & find the lands. store lands (coordinates) in a hashset. O(mn)
+        // short circuit: if hashSet is empty return 0.
+    // start with first land in hashSet
+    // run BFS & at each iteration remove visited land from the hashet. O(l) - l being number of lands
+    // repeat until hashset is empty.
+
+    def solve(): Int = {
+        findLands()
+        if(unvisitedLands.size == 0) return 0
+
+        var count = 0
+
+        while(!unvisitedLands.isEmpty) {
+            var land = unvisitedLands.head
+            val q = mutable.Queue(land)
+            unvisitedLands.remove(land)
+            visited.add(land)
+
+            scopeOutIsland(q)
+            count += 1
+        }
+        count
+    }
+
+    private def scopeOutIsland(q: mutable.Queue[Coordinates]): Unit = {
+        // add neighboring lands to q and remove from hashSet
+        // when q is empty increment count
+        // enqueueLandNeighbors
+        while(!q.isEmpty) {
+            var curr = q.dequeue()
+            enqueueLandNeighbors(curr, q)
+        }
+    }
+
+    private def enqueueLandNeighbors(curr: Coordinates, q: mutable.Queue[Coordinates]): Unit = {
+        val aboveNeighbor = Coordinates(curr.row, curr.col + 1)
+        val belowNeighbor = Coordinates(curr.row, curr.col - 1)
+        val rightNeighbor = Coordinates(curr.row + 1, curr.col)
+        val leftNeighbor = Coordinates(curr.row - 1, curr.col)
+
+        if(areCoordinatesValid(aboveNeighbor) && isNonvisitedLand(aboveNeighbor)) {
+            q.enqueue(aboveNeighbor)
+            visited.add(aboveNeighbor)
+            unvisitedLands.remove(aboveNeighbor)
+        }
+        if(areCoordinatesValid(belowNeighbor) && isNonvisitedLand(belowNeighbor)) {
+            q.enqueue(belowNeighbor)
+            visited.add(belowNeighbor)
+            unvisitedLands.remove(belowNeighbor)
+        }
+        if(areCoordinatesValid(rightNeighbor) && isNonvisitedLand(rightNeighbor)) {
+            q.enqueue(rightNeighbor)
+            visited.add(rightNeighbor)
+            unvisitedLands.remove(rightNeighbor)
+        }
+        if(areCoordinatesValid(leftNeighbor) && isNonvisitedLand(leftNeighbor)) {
+            q.enqueue(leftNeighbor)
+            visited.add(leftNeighbor)
+            unvisitedLands.remove(leftNeighbor)
+        }
+    }
+
+    private def isNonvisitedLand(coord: Coordinates): Boolean = !visited.contains(coord) && isLand(coord)
+
+    private def areCoordinatesValid(cord: Coordinates): Boolean =
+    0 <= cord.row && cord.row < rows && 0 <= cord.col && cord.col < cols
+
+    private def isLand(cord: Coordinates): Boolean = grid(cord.row)(cord.col) == Land
+
+    private def findLands(): Unit = { // Time: O(m x n)
+        grid.zipWithIndex.foreach { case(row, rIdx) =>
+            row.zipWithIndex.foreach { case(col, cIdx) =>
+                if(grid(rIdx)(cIdx) == Land) {
+                    unvisitedLands.add(Coordinates(rIdx, cIdx))
+                }
+            }
+        }
+    }
+
+}
